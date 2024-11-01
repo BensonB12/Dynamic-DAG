@@ -6,54 +6,58 @@ from player import Player
 # Directional: Nodes connected to other nodes have a direction
 # ACYCLIC: If you follow the directions of the graph, 
 #           there are no loops, you cannot get back to where you started following the path
-# We also assume that the graph has a 's' and 't' node in the graph. We also assume that
+# We also assume that the graph has a single 's' and a single 't' node in the graph. We also assume that
 #   the 's' node is a 'source vertex' and the 't' node is a 'sink vertex'
 # Source Vertex: A node that has no nodes pointing to it
 # Sink Vertex: A node that does not point to any other nodes
-# The last thing we assume is that this graph is connected. The problem we are solving says 
-#   that there is always a winner, either "River" of "Doctor". If the graph is split into 
-#   two different graphs that cannot connect, then there is no winners because 's' and 't' 
-#   could be on different 'graph islands' and therefore neither would win 
 # If any of these rules are broken when calling who_wins, it will not work as desired. In
 #   fact it might be an infinite loop and hurt the running machine
 class KeepAwayGame:
-  @staticmethod
-  def who_wins(g: Graph) -> str:
-    base_case_value_or_none = KeepAwayGame.has_base_case_value_or_none(g)
+  def __init__(self, g: Graph):
+    self.g = g
+
+  def who_wins(self) -> str:
+    base_case_value_or_none = self._has_base_case_value_or_none()
 
     if base_case_value_or_none is not None:
       return base_case_value_or_none
     
-    # If there is only one directed line/links of nodes then River will always win because the Doctor cannot go 'around' her
-    if KeepAwayGame.graph_is_a_line(g):
-      return Player.RIVER.value
-    
-    # If there is only one directed line/links of nodes then River will always win because the Doctor cannot go 'around' her
-    if KeepAwayGame.graph_is_a_line(g):
-      return Player.RIVER.value
-
-  @staticmethod
-  def graph_is_a_line(g: Graph) -> bool:
-    for n in g.nodes[1:]:
-      if len(n.node_ids_that_point_to_me) != 1:
-        return False
-    return True
-
-    
-  @staticmethod
-  def has_base_case_value_or_none(g: Graph) -> str | None:
+  def _has_base_case_value_or_none(self) -> str | None:
     # Base Case 0: If there are no nodes in the graph, the doctor wins because
     #               RIVER will never be on his node (This case kind of breaks 
     #               the rules set up by the problem, but if it was an easy case 
     #               to handle I tried to handle it)
-    if(len(g.nodes) < 1):
+    if(len(self.g.nodes) < 1):
       return Player.DOCTOR.value
     
     # Base Case 1: If there is only one node, River wins before the game even starts. 
     #                 She is touching the Doctor before the Doctor can check to see
     #                 if he is in the right spot or River is in the right spot
-    if(len(g.nodes) == 1):
+    if(len(self.g.nodes) == 1):
       return Player.RIVER.value
     
     return None
   
+  def _step_without_losing(self, g: Graph, playersTurn: Player) -> Player | None:
+    winner = KeepAwayGame._check_for_winner(g)
+
+    if winner is not None:
+      return winner
+    
+    if(playersTurn == Player.DOCTOR):
+      for n in g.doctors_tile.points_to_nodes:
+        new_graph = Graph()
+        self._step_without_losing()
+
+
+  def _check_for_winner(self) -> Player | None:
+    # If both players are on the same tile, River wins!
+    if self.g.doctors_tile == self.g.rivers_tile:
+      return Player.RIVER
+    
+    # If Doctor is on the 'vertex sink' or River is on the 'vertex source' then the Doctor wins!
+    if self.g.doctors_tile == self.g.sink_node or self.g.rivers_tile == self.g.source_node:
+      return Player.DOCTOR
+    
+    return None
+    
