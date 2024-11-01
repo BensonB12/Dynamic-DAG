@@ -8,7 +8,7 @@ class Node(BaseModel):
     is_s: bool
     is_t: bool
     points_to_nodes: List[Node]
-    nodes_that_point_to_me: List[int]
+    node_ids_that_point_to_me: List[int]
 
 
 class Graph(BaseModel):
