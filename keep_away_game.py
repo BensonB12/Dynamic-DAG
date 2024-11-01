@@ -46,8 +46,18 @@ class KeepAwayGame:
     
     if(playersTurn == Player.DOCTOR):
       for n in g.doctors_tile.points_to_nodes:
-        new_graph = Graph()
-        self._step_without_losing()
+        if n == g.rivers_tile:
+          return None
+        new_graph = Graph(self.g.nodes)
+        new_graph.move_doctors_tile(n)
+        self._step_without_losing(new_graph, Player.RIVER)
+    else:
+      for n in g.rivers_tile.points_to_nodes:
+        if n == g.doctors_tile:
+          return Player.RIVER
+        new_graph = Graph(self.g.nodes)
+        new_graph.move_rivers_tile(n)
+        self._step_without_losing(new_graph, Player.DOCTOR)
 
 
   def _check_for_winner(self) -> Player | None:
