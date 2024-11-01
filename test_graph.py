@@ -1,8 +1,5 @@
 from graph import Node, Graph
 
-def test_pytest():
-  assert True
-
 def test_node():
   n0 = Node(id=0)
   assert n0
