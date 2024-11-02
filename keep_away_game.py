@@ -22,6 +22,8 @@ class KeepAwayGame:
     if base_case_value_or_none is not None:
       return base_case_value_or_none
     
+    return self._step_return_winner(self.g, Player.DOCTOR).value
+    
   def _has_base_case_value_or_none(self) -> str | None:
     # Base Case 0: If there are no nodes in the graph, the doctor wins because
     #               RIVER will never be on his node (This case kind of breaks 
@@ -38,35 +40,51 @@ class KeepAwayGame:
     
     return None
   
-  def _step_without_losing(self, g: Graph, playersTurn: Player) -> Player | None:
-    winner = KeepAwayGame._check_for_winner(g)
+  def _step_return_winner(self, g: Graph, playersTurn: Player) -> Player | None:
+    winner = self._check_for_winner(g)
 
     if winner is not None:
       return winner
-    
+
+    list_of_winners = []
     if(playersTurn == Player.DOCTOR):
       for n in g.doctors_tile.points_to_nodes:
         if n == g.rivers_tile:
-          return None
-        new_graph = Graph(self.g.nodes)
+          if len(g.doctors_tile.points_to_nodes):
+            list_of_winners.append(Player.RIVER)
+          break
+        new_graph = Graph(g.nodes)
         new_graph.move_doctors_tile(n)
-        self._step_without_losing(new_graph, Player.RIVER)
+        new_graph.move_rivers_tile(g.rivers_tile)
+        list_of_winners.append(self._step_return_winner(new_graph, Player.RIVER))
     else:
-      for n in g.rivers_tile.points_to_nodes:
+      for i in g.rivers_tile.node_ids_that_point_to_me:
+        n = g.node_dict[i]
         if n == g.doctors_tile:
           return Player.RIVER
-        new_graph = Graph(self.g.nodes)
+        new_graph = Graph(g.nodes)
         new_graph.move_rivers_tile(n)
-        self._step_without_losing(new_graph, Player.DOCTOR)
+        new_graph.move_doctors_tile(g.doctors_tile)
+        list_of_winners.append(self._step_return_winner(new_graph, Player.DOCTOR))
 
+    set_with_only_players = set([p for p in list_of_winners if p is not None])
 
-  def _check_for_winner(self) -> Player | None:
+    if set_with_only_players == {Player.DOCTOR, Player.RIVER}:
+      return Player.DOCTOR
+    elif set_with_only_players == {Player.DOCTOR}:
+      return Player.DOCTOR
+    elif set_with_only_players == {Player.RIVER}:
+      return Player.RIVER
+    else:
+        return None
+
+  def _check_for_winner(self, g: Graph) -> Player | None:
     # If both players are on the same tile, River wins!
-    if self.g.doctors_tile == self.g.rivers_tile:
+    if g.doctors_tile == g.rivers_tile:
       return Player.RIVER
     
     # If Doctor is on the 'vertex sink' or River is on the 'vertex source' then the Doctor wins!
-    if self.g.doctors_tile == self.g.sink_node or self.g.rivers_tile == self.g.source_node:
+    if g.doctors_tile == g.sink_node or g.rivers_tile == g.source_node:
       return Player.DOCTOR
     
     return None
