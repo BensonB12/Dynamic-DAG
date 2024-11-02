@@ -1,4 +1,2 @@
 pydantic
-__future__
-typing
 pytest

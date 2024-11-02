@@ -1,5 +1,6 @@
 from graph import Graph
 from player import Player
+from functools import lru_cache
 
 # We assume that the graph is a Directional ACYCLIC Graph
 # Graph: There are nodes and edges
@@ -40,6 +41,7 @@ class KeepAwayGame:
     
     return None
   
+  @lru_cache(None)
   def _step_return_winner(self, g: Graph, playersTurn: Player) -> Player | None:
     winner = self._check_for_winner(g)
 
